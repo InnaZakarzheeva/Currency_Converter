@@ -2,7 +2,8 @@ import React from 'react';
 import axios from 'axios';
 import TextField from '@material-ui/core/TextField';
 import swapImg from '../img/swap.png';
-import './calculate.css'
+import './calculate.css';
+import History from './history.js'
 
 export default class Calculate extends React.Component{
     state = {
@@ -11,7 +12,11 @@ export default class Calculate extends React.Component{
         amountFrom: 0,
         currencyFrom: '',
         amountTo: 0,
-        currencyTo: ''
+        currencyTo: '',
+        labels: [],
+        data: [],
+        dateFrom: '2018-01-01',
+        dateTo: '2019-01-01'
     }
 
     getAPI() {
@@ -21,13 +26,35 @@ export default class Calculate extends React.Component{
                   items: response.data
               })
               this.update();
-              console.log(this.state.items)
           })
           .catch(error => {
             console.log(error);
           });
       }
     
+    getHistory = () => {
+        axios.get(`https://api.exchangeratesapi.io/history?start_at=${this.state.dateFrom}&end_at=${this.state.dateTo}&base=${this.state.currencyFrom}`)
+        .then(response => {
+            let labels = [];
+            let arr = [];
+            for (let key in response.data.rates) {
+                for (let item in response.data.rates[key]){
+                    if(item === this.state.currencyTo) {
+                        arr.push(response.data.rates[key][item])
+                    }
+                }
+                labels.push(key)
+            }
+            this.setState({
+                labels: labels,
+                data: arr
+            })
+            console.log(this.state.labels)
+        })
+        .catch(error => {
+            console.log(error);
+          });
+    }
     handleChangeAmountFrom = ({target: {value}}) => {
         this.setState({
             amountFrom: value
@@ -66,7 +93,7 @@ export default class Calculate extends React.Component{
     calculation = (coef) => {
         this.setState({
             amountTo: (this.state.amountFrom * coef).toFixed(2)
-        })
+        }, () => this.getHistory())
     }
 
     swap = () => {
@@ -77,8 +104,21 @@ export default class Calculate extends React.Component{
         }, () => this.getAPI())
     }
 
+    handleChangeDateFrom = ({target: {value}}) => {
+        this.setState({
+            dateFrom: value
+        }, () => this.getHistory())
+    }
+
+    handleChangeDateTo = ({target: {value}}) => {
+        this.setState({
+            dateTo: value
+        }, () => this.getHistory())
+    }
+
     render() {
         return(
+            <div className='wrapper'>
             <div className="calculate-wrapper">
                 <TextField label='Amount from' 
                     type='text' 
@@ -95,7 +135,7 @@ export default class Calculate extends React.Component{
                     margin="normal"
                     onChange={this.handleChangeCurrencyFrom}
                 />
-                <img src={swapImg} onClick={this.swap} className='swap'/>
+                <img src={swapImg} onClick={this.swap} className='swap' alt='swap'/>
                     <TextField label='Currency to' 
                         type='text' 
                         variant="outlined" 
@@ -112,6 +152,26 @@ export default class Calculate extends React.Component{
                         margin="normal"
                         readOnly
                     />
+                </div>
+                <div className='date-wrapper'>
+                    <TextField
+                        id="date"
+                        label="Date from"
+                        type="date"
+                        defaultValue={this.state.dateFrom} 
+                        onChange={this.handleChangeDateFrom}                    
+                    />
+                    <TextField
+                        id="date"
+                        label="Date to"
+                        type="date"
+                        defaultValue={this.state.dateTo} 
+                        onChange={this.handleChangeDateTo}                    
+                    />
+                </div>
+                <History labels={this.state.labels}
+                    currencyTo={this.state.currencyTo}
+                    data={this.state.data}/>
                 </div>
             )
     }

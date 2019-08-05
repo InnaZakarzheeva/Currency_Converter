@@ -1,7 +1,19 @@
+.wrapper {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+}
 .calculate-wrapper {
     display: flex;
     width: 100%;
     justify-content: space-evenly;
+}
+.date-wrapper {
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    margin-top: 2%;
 }
 .swap{
     margin-top: 1%;
